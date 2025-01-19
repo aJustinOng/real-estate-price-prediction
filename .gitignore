@@ -1,2 +1,5 @@
+/model/.ipynb_checkpoints
+/.idea
+
 realtor-data.csv
-/.ipynb_checkpoints
+__pycache__
