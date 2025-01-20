@@ -1,4 +1,4 @@
-# USA Real Estate Price Prediction ![](./assets/img/house-icon.svg)
+# Real Estate Price Prediction ![](./assets/img/house-icon.svg)
 ##### Justin Ong, 20th January 2025
 
 ### Skills:
