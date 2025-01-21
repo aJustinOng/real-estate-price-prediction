@@ -502,21 +502,17 @@ This is the Python file which we use to run the server. We first import the need
 ```
 from flask import Flask, request, jsonify
 import util
-
 ```
 
 We set the app as a Flask server:
 
 ```
-
 app = Flask(__name__)
-
 ```
 
 This is a GET method function to get a list of the states by calling `get_location_names()` from `util.py`. This is called when the server gets a HTTP GET request with the url `/get_location_names`.
 
 ```
-
 @app.route('/get_location_names', methods=['GET'])
 def get_location_names():
     response = jsonify({
