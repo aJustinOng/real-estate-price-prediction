@@ -84,7 +84,7 @@ df1.shape
 
 ### 1.4 Drop Unnecessary Columns
 
-We need to remove the columns that are not necessary to train the model. To keep the project simple and manageable, we also drop values like `acre_lot` and limit the location column to state by dropping `street`, `city`, and `zip_code`. By only categorizing the locations by state, it helps the model training process by dimensionality reduction, especially during the one-hot encoding process (around 50 columns for each state instead of thousands or millions of values).
+We need to remove the columns that are not necessary to train the model. To keep the project simple and manageable, we also drop values like `acre_lot` and limit the location column to `state` by dropping `street`, `city`, and `zip_code`. By only categorizing the locations by state, it helps the model training process by dimensionality reduction, especially during the one-hot encoding process (around 50 columns for the 50 U.S. states instead of thousands or millions of values).
 
 ```
 df2 = df1.drop(['brokered_by', 'status', 'prev_sold_date', 'acre_lot', 'street', 'city', 'zip_code'], axis = 'columns')
