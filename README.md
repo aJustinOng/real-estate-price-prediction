@@ -662,7 +662,7 @@ The webpage is a basic one that serves the singular purpose of allowing a user t
 
 As mentioned in the beginning notes of this section, I will only be going over `app.html` and `app.css` briefly. The files for this webpage is all under the `client` folder provided in this GitHub repository. The design is very simple: a form with the necessary inputs and output on a blurred image.
 
-<img src="/assets/img/website-ui-0" width="100%">
+<img src="/assets/img/website-ui-0.png" width="100%">
 
 The HTML has a text field with the id `uiSqft` for the user to input the desired sqft, two rows of radio buttons with names `uiBHK` and `uiBathrooms` where the user can choose between 1 to 7 bedrooms and/or bathrooms respectively, and a dropdown with the id `uiLocations` which the user can pick between states. The dropdown will be populated with the state names after calling the `/get_location_names` GET request. At the bottom there a "Estimate Price" buttom to submit the inputs and an empty result box which will display the result once it gets an output from the server.
 
