@@ -47,5 +47,5 @@ if __name__ == '__main__':
     print(get_location_names())
     print(get_estimated_price('Arkansas', 2, 2, 1000))
     print(get_estimated_price('Arkansas', 3, 3, 1000))
-    print(get_estimated_price('New York', 2, 2, 1000))  # other location
-    print(get_estimated_price('New York', 3, 3, 1000))  # other location
+    print(get_estimated_price('New York', 2, 2, 1000))
+    print(get_estimated_price('New York', 3, 3, 1000))
