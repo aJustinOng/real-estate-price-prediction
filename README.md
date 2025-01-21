@@ -1,4 +1,4 @@
-# Real Estate Price Prediction ![](./assets/img/house-icon.svg) (README.md in progress)
+# Real Estate Price Prediction ![](./assets/img/house-icon.svg)
 ##### Justin Ong, 20th January 2025
 
 ### Skills:
@@ -15,7 +15,7 @@
 
 This project is based on CodeBasic's [Real Estate Price Prediction](https://www.youtube.com/playlist?list=PLeo1K3hjS3uu7clOTtwsp94PcHbzqpAdg) project.
 
-In this data science project, I cleaned and visualized a real estate dataset from Kaggle and used it to build a model with scikit-learn using linear regression. Next, I created a Python Flask server that can use the model to run HTTP requests, which I tested using Postman. Lastly, I made a website using HTML, CSS, and JavaScript with a user-friendly UI, where the user can enter their desired house area (square feet), number of bedrooms and bathrooms, and state to get a predicted price.
+In this data science project, I cleaned and visualized a real estate dataset from Kaggle and used it to build a model with scikit-learn using linear regression. Next, I created a Python Flask server to run the model and receive GET and POST requests, which I tested using Postman. Lastly, I made a webpage using HTML, CSS, and JavaScript with a user-friendly UI, where the user can enter their desired house area (square feet), number of bedrooms and bathrooms, and state to get a predicted price.
 
 The model building section covers a majority of data science concepts like data cleaning, outlier removal, feature engineering, dimensionality reduction, one hot encoding, and K-Fold cross-validation. This README.md is a complete documentation of the project.
 
@@ -27,7 +27,7 @@ The model building section covers a majority of data science concepts like data 
 3. [One Hot Encoding Using Pandas](#3-one-hot-encoding-using-pandas)
 4. [Model Building Using Scikit-Learn](#4-model-building-using-scikit-learn)
 5. [Creating a Python Flask Server](#5-creating-a-python-flask-server)
-6. [Creating a User-Friendly Website](#6-creating-a-user-friendly-website)
+6. [Creating a User-Friendly Webpage](#6-creating-a-user-friendly-webpage)
 7. [Summary](#summary)
 
 ---
@@ -255,7 +255,6 @@ def plot_scatter_chart(df, state):
 So after using the following function to remove said outlier, the shape is drastically reduced to (485,655 rows, 6 columns):
 
 ```
-# Remove bedroom outliers (same state, but 2 bed price is higher than 3 bed, etc.)
 def remove_bed_outliers_by_number(df):
     exclude_indices = np.array([])
     for state, state_df in df.groupby('state'):
@@ -342,7 +341,7 @@ At this point we have a fully cleaned dataset and can move on to one final step 
 
 ## 3. One Hot Encoding Using Pandas
 
-We cannot build a model using categorical values, so we can use the one-hot encoding method (aka dummy variables) to convert each state into a binary format. We do this with Pandas' built-in dummies function:
+We cannot build a model using categorical values, so we can use the one hot encoding method (aka dummy variables) to convert each state into a binary format. We do this with Pandas' built-in dummies function:
 
 ```
 dummies = pd.get_dummies(df9.state)
@@ -492,8 +491,292 @@ with open("columns.json","w") as f:
 
 ## 5. Creating a Python Flask Server
 
-## 6. Creating a User-Friendly Website
+> In this section I will not be going over the steps in chronological order, but rather briefly explain each file in the `server` folder provided in this GitHub repository. This is because the steps frequently jump between `server.py` and `util.py`, and can cause a lot of confusion if done step-by-step.
+
+In order to run the model on a website, we have to create a server to host the model. We can use a Python Flask server for this project. We create two files `server.py` and `util.py` and a folder called `artifacts` where we copy the `usa_home_prices_model.pickle` and `columns.json` files we just exported from Jupyter Notebook. Using PyCharm or another Python editor will work for this section.
+
+### 5.1 `server.py`
+
+This is the Python file which we use to run the server. We first import the needed libraries from Flask as well as `util.py`, which will contain the functions that we need to perform GET and POST requests.
+
+```
+from flask import Flask, request, jsonify
+import util
+
+```
+
+We set the app as a Flask server:
+
+```
+
+app = Flask(__name__)
+
+```
+
+This is a GET method function to get a list of the states by calling `get_location_names()` from `util.py`. This is called when the server gets a HTTP GET request with the url `/get_location_names`.
+
+```
+
+@app.route('/get_location_names', methods=['GET'])
+def get_location_names():
+    response = jsonify({
+        'locations': util.get_location_names()
+    })
+    response.headers.add('Access-Control-Allow-Origin', '*')
+
+    return response
+```
+
+This is a POST method function to return a predicted real estate price from the given `state`, `bed`, `bath`, and `sqft` parameters by calling `get_estimated_price()` from `util.py`. This is called when the server gets a HTTP POST request with the url `/predict_home_price` and returns a response if provided with valid parameters.
+
+```
+@app.route('/predict_home_price', methods=['POST'])
+def predict_home_price():
+    sqft = float(request.form['sqft'])
+    state = request.form['state']
+    bed = int(request.form['bed'])
+    bath = int(request.form['bath'])
+
+    response = jsonify({
+        'estimated_price': util.get_estimated_price(state, bed, bath, sqft)
+    })
+    response.headers.add('Access-Control-Allow-Origin', '*')
+
+    return response
+```
+
+This main function runs when `server.py` is run. It logs a prompt and calls `load_saved_artifacts()` from `util.py` before starting the Flask server.
+
+```
+if __name__ == "__main__":
+    print("Starting Python Flask Server for Home Price Prediction...")
+    util.load_saved_artifacts()
+    app.run()
+```
+
+### 5.2 `util.py`
+
+This Python file is where we store all the functions that are used in `server.py`. This is where we load the artifacts, get the locations from the JSON file, and feed the model with with the required parameters and return the predicted price back to `server.py` Here we import the libraries required to do so:
+
+```
+import json
+import pickle
+import numpy as np
+```
+
+Now declare global functions:
+
+```
+__locations = None
+__data_columns = None
+__model = None
+```
+
+This is the function that is automatically run when `server.py` starts, since it is called in its main function. It loads the JSON file `columns.json` into the global variable `__data_columns` and splits the array to remove the `bed`, `bath`, and `sqft` columns before storing the rest into the global variable `__locations`. If there is no existing model, it stores the model from `usa_home_prices_model.pickle` into the global variable `__model`.
+
+```
+def load_saved_artifacts():
+    print("Loading save artifacts...start")
+    global __data_columns
+    global __locations
+
+    with open("./artifacts/columns.json", "r") as f:
+        __data_columns = json.load(f)["data_columns"]
+        __locations = __data_columns[3:]
+
+    global __model
+    if __model is None:
+        with open("./artifacts/usa_home_prices_model.pickle", "rb") as f:
+            __model = pickle.load(f)
+    print("loading saved artifacts...done")
+```
+
+This is the function where we run the model to predict a price based on `state`, `bed`, `bath`, and `sqft`. The `x` array stores the values of the parameters, which we feed into the model before returning the result.
+
+```
+def get_estimated_price(state, bed, bath, sqft):
+    try:
+        loc_index = __data_columns.index(state.lower())
+    except:
+        loc_index = -1
+
+    x = np.zeros(len(__data_columns))
+    x[0] = bed
+    x[1] = bath
+    x[2] = sqft
+    if loc_index >= 0:
+        x[loc_index] = 1
+
+    return round(__model.predict([x])[0],2)
+```
+
+The following should be self-explanatory:
+
+```
+def get_location_names():
+    return __locations
+
+def get_data_columns():
+    return __data_columns
+```
+
+And the main function is runs when `util.py` is run. Used for testing purposes.
+
+```
+if __name__ == '__main__':
+    load_saved_artifacts()
+    print(get_location_names())
+    print(get_estimated_price('Arkansas', 2, 2, 1000))
+    print(get_estimated_price('Arkansas', 3, 3, 1000))
+    print(get_estimated_price('New York', 2, 2, 1000))
+    print(get_estimated_price('New York', 3, 3, 1000))
+```
+
+### 5.3 Postman Testing
+
+Now we are ready to start the server up. Make sure that the `columns.json` and `usa_home_prices_model.pickle` files are in a `artifacts` folder in the same directory as `server.py` and `util.py`. Open up a terminal in PyCharm (or Python editor of choice) and make sure that it is in that directory. Run the server using:
+
+```
+python server.py
+```
+
+When the server loads it should say:
+
+```
+Running on http://127.0.0.1:5000
+```
+
+Open up Postman and do a GET request with the URL `127.0.0.1:5000/get_location_names` or `localhost:5000/get_location_names` and we should get the following 200 response:
+
+<img src="/assets/img/postman-get-locations.png" width="100%"/>
+
+Next, do a POST request with the URL `127.0.0.1:5000/predict_home_price` or `localhost:5000/predict_home_price` along with valid parameters in the form-data option in the body tab (check image if unsure). Type `state`, `bed`, `bath`, and `sqft` under the `Key` column and valid values in the `Value` column. If everything was entered correctly, we should get the following 200 response with `estimated_price`:
+
+<img src="/assets/img/postman-post-predict-home-price.png" width="100%"/>
+
+If everything went as expected, we can now create a UI website that call the same GET and POST requests and display `estimated_price` to a user.
+
+## 6. Creating a User-Friendly Webpage
+
+> In this section, I will not go over the code in the HTML and CSS files, since they are not the focus of the project. I will only briefly go over the design and necessary functions of them. The files for this webpage is all under the `client` folder provided in this GitHub repository.
+
+The webpage is a basic one that serves the singular purpose of allowing a user to conviniently input their desired `state`, `bed`, `bath`, and `sqft` values and receive an output with the click of a button. It is created with basic HTML, CSS, and JavaScript. We can create `app.html`, `app.css`, and `app.js` in the same folder. Visual Studio Code is a suitable code editor for all three files.
+
+### 6.1 HTML and CSS
+
+As mentioned in the beginning notes of this section, I will only be going over `app.html` and `app.css` briefly. The files for this webpage is all under the `client` folder provided in this GitHub repository. The design is very simple: a form with the necessary inputs and output on a blurred image.
+
+<img src="/assets/img/website-ui-0" width="100%">
+
+The HTML has a text field with the id `uiSqft` for the user to input the desired sqft, two rows of radio buttons with names `uiBHK` and `uiBathrooms` where the user can choose between 1 to 7 bedrooms and/or bathrooms respectively, and a dropdown with the id `uiLocations` which the user can pick between states. The dropdown will be populated with the state names after calling the `/get_location_names` GET request. At the bottom there a "Estimate Price" buttom to submit the inputs and an empty result box which will display the result once it gets an output from the server.
+
+Additional styling and tranisition animations is done in CSS. We can add a blurred image as the background just to help the webpage look more aesthetic, but it is not required.
+
+### 6.2 JavaScript
+
+To load in the state names and get an output from the model, we have to use JavaScript. First, we create a function to get the user-selected number of bedrooms from `uiBHK` by checking which radio button was selected:
+
+```
+function getBedValue() {
+    var uiBHK = document.getElementsByName("uiBHK");
+    for (var i in uiBHK) {
+        if (uiBHK[i].checked) {
+            return parseInt(i) + 1;
+        }
+    }
+    return -1; // Invalid Value
+}
+```
+
+Then do the same for the number of bathrooms from `uiBathrooms`:
+
+```
+function getBathValue() {
+    var uiBathrooms = document.getElementsByName("uiBathrooms");
+    for (var i in uiBathrooms) {
+        if (uiBathrooms[i].checked) {
+            return parseInt(i) + 1;
+        }
+    }
+    return -1; // Invalid Value
+}
+```
+
+We also need a function that will be called when the "Estimate Price" button is clicked. This function grabs all the input values with some help from `getBedValue()` and `getBathValue()` and sends a `/predict_home_price` POST request to the server. If the server returns a result, this function converts the result into a string and updates the HTML of the result box with it. We can add a dollar sign ($) to the front of the string so that the user understands that it is a currency value.
+
+```
+function onClickedEstimatePrice() {
+    console.log("Estimate price button clicked");
+    var sqft = document.getElementById("uiSqft");
+    var bedrooms = getBedValue();
+    var bathrooms = getBathValue();
+    var location = document.getElementById("uiLocations");
+    var estPrice = document.getElementById("uiEstimatedPrice");
+
+    var url = "http://127.0.0.1:5000/predict_home_price";
+
+    $.post(url, {
+        state: location.value,
+        bed: bedrooms,
+        bath: bathrooms,
+        sqft: parseFloat(sqft.value)
+    }, function (data, status) {
+        console.log(data.estimated_price);
+        estPrice.innerHTML = "<h2>$" + data.estimated_price.toString() + "</h2>";
+        console.log(status);
+    });
+}
+```
+
+This function runs when the page loads. The only thing we need from this function is to retrieve the state names by calling the `/get_location_names` GET request. Since the states are all in lowercase, we also capitalize each word in this function (e.g. "new york" -> "New York") before it is populated in the HTML dropdown menu.
+
+```
+function onPageLoad() {
+    console.log("document loaded");
+    var url = "http://127.0.0.1:5000/get_location_names";
+    $.get(url, function (data, status) {
+        console.log("got response for get_location_names request");
+        if (data) {
+            var locations = data.locations;
+            var uiLocations = document.getElementById("uiLocations");
+            $('#uiLocations').empty();
+            for (var i in locations) {
+                var locationName = locations[i]  // Capitalize each state
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+                var opt = new Option(locationName);
+                $('#uiLocations').append(opt);
+            }
+        }
+    });
+}
+```
+
+Finally, as with any JavaScript file, we put this at the end.
+
+```
+window.onload = onPageLoad;
+```
+
+### 6.4 Final Result
+
+Now we can open up the HTML file on any browser (make sure the server is still running) and use the webpage UI!
+
+Here is the result when submitting the default values of 2,000 sqft, 1 bedroom, 1 bathroom, and the state of Alabama:
+
+<img src="/assets/img/website-ui-1.png" width="100%"/>
+
+Of course, we can select other values, such as 2,400 sqft, 3 bedrooms, 2 bathrooms, and the state of New York:
+
+<img src="/assets/img/website-ui-2.png" width="100%"/>
+
+Now the webpage is ready to deploy to production on a cloud service if we wish to, but that is beyond the scope of this project (and my wallet). Thank you for reading through this project!
 
 ## Summary
+
+In this Real Estate Price Prediction project, I took a Kaggle dataset of more than 2.2 million rows and thoroughly cleaned it with outlier removal, feature engineering, and dimensionality reduction. I then used one hot encoding to create dummy values for each state, a categorical value, and built a linear regression model using scikit-learn. I also ultilized K-Fold cross-validation to test the accuracy of the model, which was around 0.7-0.8.
+
+To take this project further, I wanted to run the model on a webpage. To do this, I created a Python Flask server that hosted the model to receive HTTP requests, which I tested with Postman. Next, I used HTML, CSS, and JavaScript to create a webpage with a simple yet user-friendly design. The webpage sends GET and POST requests to the Flask server, and displays the final results to the user.
 
 [See my other projects!](https://github.com/aJustinOng)
