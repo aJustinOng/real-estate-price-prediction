@@ -18,7 +18,7 @@ I started by preprocessing the dataset and used it to build a model with scikit-
 
 The model building section covers a majority of data science concepts like data cleaning, outlier removal, feature engineering, dimensionality reduction, one hot encoding, and K-Fold cross-validation.
 
-<img src="/assets/img/website-ui-1.png" width="100%"/>
+<img src="/assets/img/website-ui.gif" width="100%"/>
 
 ## Table of contents:
 1. [Importing Libraries and Data Loading](#1-importing-libraries-and-data-loading)
