@@ -1,11 +1,8 @@
 # Real Estate Price Prediction ![](./assets/img/house-icon.svg)
-##### Justin Ong, 20th January 2025
 
-### Skills:
-`Python | NumPy | Pandas | Matplotlib | scikit-learn | HTML | CSS | JavaScript`
+**Skills:** `Python | NumPy | Pandas | Matplotlib | scikit-learn | HTML | CSS | JavaScript`
 
-### Tools:
-`Jupyter Notebook | VS Code | PyCharm | Flask | Postman`
+**Tools:** `Jupyter Notebook | VS Code | PyCharm | Flask | Postman`
 
 ##### [See my other projects!](https://github.com/aJustinOng)
 
@@ -15,9 +12,11 @@
 
 This project is based on CodeBasic's [Real Estate Price Prediction](https://www.youtube.com/playlist?list=PLeo1K3hjS3uu7clOTtwsp94PcHbzqpAdg) project.
 
-In this data science project, I cleaned and visualized a real estate dataset from Kaggle and used it to build a model with scikit-learn using linear regression. Next, I created a Python Flask server to run the model and receive GET and POST requests, which I tested using Postman. Lastly, I made a webpage using HTML, CSS, and JavaScript with a user-friendly UI, where the user can enter their desired house area (square feet), number of bedrooms and bathrooms, and state to get a predicted price.
+In this regression project, I used a U.S. real estate dataset (2.2M+ entries) on Kaggle that was extracted from Realtor.com to create a prediction model that estimates the price of a property based on house area (square feet), number of bedrooms and bathrooms, and state.
 
-The model building section covers a majority of data science concepts like data cleaning, outlier removal, feature engineering, dimensionality reduction, one hot encoding, and K-Fold cross-validation. This README.md is a complete documentation of the project.
+I started by preprocessing the dataset and used it to build a model with scikit-learn using linear regression. The model was then exported as a Pickle file. Next, I created a Python Flask server to run the model and receive GET and POST requests, which I tested using Postman. Lastly, I made a webpage using HTML, CSS, and JavaScript with a user-friendly UI, where the user can enter their desired inputs to get a predicted price.
+
+The model building section covers a majority of data science concepts like data cleaning, outlier removal, feature engineering, dimensionality reduction, one hot encoding, and K-Fold cross-validation.
 
 <img src="/assets/img/website-ui-1.png" width="100%"/>
 
@@ -662,7 +661,7 @@ The webpage is a basic one that serves the singular purpose of allowing a user t
 
 As mentioned in the beginning notes of this section, I will only be going over `app.html` and `app.css` briefly. The files for this webpage is all under the `client` folder provided in this GitHub repository. The design is very simple: a form with the necessary inputs and output on a blurred image.
 
-<img src="/assets/img/website-ui-0" width="100%">
+<img src="/assets/img/website-ui-0.png" width="100%">
 
 The HTML has a text field with the id `uiSqft` for the user to input the desired sqft, two rows of radio buttons with names `uiBHK` and `uiBathrooms` where the user can choose between 1 to 7 bedrooms and/or bathrooms respectively, and a dropdown with the id `uiLocations` which the user can pick between states. The dropdown will be populated with the state names after calling the `/get_location_names` GET request. At the bottom there a "Estimate Price" buttom to submit the inputs and an empty result box which will display the result once it gets an output from the server.
 
