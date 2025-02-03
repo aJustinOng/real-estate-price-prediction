@@ -754,7 +754,7 @@ Finally, as with any JavaScript file, we put this at the end.
 window.onload = onPageLoad;
 ```
 
-### 6.4 Final Result
+### 6.3 Final Result
 
 Now we can open up the HTML file on any browser (make sure the server is still running) and use the webpage UI!
 
