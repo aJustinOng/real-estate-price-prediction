@@ -559,7 +559,7 @@ import pickle
 import numpy as np
 ```
 
-Now declare global functions:
+Now declare global variables:
 
 ```
 __locations = None
